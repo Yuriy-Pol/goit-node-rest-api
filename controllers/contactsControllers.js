@@ -6,66 +6,78 @@ import {
   rewriteContact,
 } from "../services/contactsServices.js";
 
-import {
-  createContactSchema,
-  updateContactSchema,
-} from "../schemas/contactsSchemas.js";
 import HttpError from "../helpers/HttpError.js";
-import validateBody from "../helpers/validateBody.js";
 
-export const getAllContacts = (_, res) => {
-  res.json(listContacts()).status(200);
-};
-
-export const getOneContact = (req, res) => {
-  const { id } = req.params;
-  const contactToFind = getContactById(id);
-  if (contactToFind !== null) {
-    res.json(contactToFind).status(200);
-  } else {
-    res.json(HttpError(404));
+export const getAllContacts = async (_, res, next) => {
+  try {
+    const contacts = await contactsService.listContacts();
+    res.status(200).send(contacts);
+  } catch (error) {
+    next(error);
   }
 };
 
-export const deleteContact = (req, res) => {
-  const { id } = req.params;
-  const contactToDelete = removeContact(id);
-  if (contactToDelete !== null) {
-    res.json(contactToDelete).status(200);
-  } else {
-    res.json(HttpError(404));
+export const getOneContact = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const contactToFind = await contactsService.getContactById(id);
+
+    if (!contactToFind) {
+      throw HttpError(404);
+    }
+    res.status(200).send(contactToFind);
+  } catch (error) {
+    next(error);
   }
 };
 
-export const createContact = (req, res) => {
-  const { name, email, phone } = req.body;
+export const deleteContact = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const contactToDelete = await contactsService.removeContact(id);
 
-  validateBody(createContactSchema);
-
-  const addedContact = addContact(name, email, phone);
-  res.json(addedContact).status(201);
+    if (!contactToDelete) {
+      throw HttpError(404);
+    }
+    res.status(200).send(contactToDelete);
+  } catch (error) {
+    next(error);
+  }
 };
 
-export const updateContact = (req, res) => {
-  const { id } = req.params;
-  const { name, email, phone } = req.body;
+export const createContact = async (req, res, next) => {
+  try {
+    const value = req.body;
+    const addContact = await contactsService.addContact(value);
 
-  if (!name && !email && !phone) {
-    res.json({ message: "Body must have at least one field" }).status(400);
+    return res.status(201).send(addContact);
+  } catch (error) {
+    next(error);
   }
+};
 
-  validateBody(updateContactSchema);
+export const updateContact = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const value = req.body;
+    const oneContact = await contactsService.getContactById(id);
 
-  const contactToUpdate = getContactById(id);
-
-  if (contactToUpdate !== null) {
-    const updatedContact = rewriteContact(contactToUpdate, {
+    if (!oneContact) {
+      throw HttpError(404);
+    }
+    const {
+      name = oneContact.name,
+      email = oneContact.email,
+      phone = oneContact.phone,
+    } = value;
+    const updatedContact = await contactsService.updateContact(id, {
       name,
       email,
       phone,
     });
-    res.json(updatedContact).status(200);
-  } else {
-    res.json(HttpError(404));
+
+    return res.status(200).send(updatedContact);
+  } catch (error) {
+    next(error);
   }
 };

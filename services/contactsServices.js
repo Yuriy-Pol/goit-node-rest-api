@@ -53,18 +53,19 @@ export async function addContact(name, email, phone) {
   }
 }
 
-export async function rewriteContact(contactToUpdate, { name, email, phone }) {
+export async function rewriteContact(id, contact) {
   const contacts = await listContacts();
-  const index = contacts.findIndex(
-    (contact) => contact.id === contactToUpdate.id
-  );
-  if (index === -1) return null;
+  const index = contacts.findIndex((contact) => contact.id === id);
 
-  if (name) contactToUpdate.name = name;
-  if (email) contactToUpdate.email = email;
-  if (phone) contactToUpdate.phone = phone;
+  if (index === -1) {
+    return null;
+  }
 
-  contacts[index] = contactToUpdate;
-  await fs.writeFile(contactsPath, JSON.stringify(contacts));
-  return contactToUpdate;
+  const updatedContact = { id, ...contact };
+
+  contacts[index] = updatedContact;
+
+  await writeContact(contacts);
+
+  return updatedContact;
 }
