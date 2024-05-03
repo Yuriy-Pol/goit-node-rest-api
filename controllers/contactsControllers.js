@@ -59,24 +59,11 @@ export const createContact = async (req, res, next) => {
 export const updateContact = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const value = req.body;
-    const oneContact = await contactsService.getContactById(id);
 
-    if (!oneContact) {
-      throw HttpError(404);
-    }
-    const {
-      name = oneContact.name,
-      email = oneContact.email,
-      phone = oneContact.phone,
-    } = value;
-    const updatedContact = await contactsService.updateContact(id, {
-      name,
-      email,
-      phone,
-    });
+    const updatedContact = await contactsService.updateContact(id, req.body);
 
-    return res.status(200).send(updatedContact);
+    if (!updatedContact) throw HttpError(404);
+    res.json(updatedContact);
   } catch (error) {
     next(error);
   }
