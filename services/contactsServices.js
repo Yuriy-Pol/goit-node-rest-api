@@ -43,14 +43,6 @@ export async function addContact(name, email, phone) {
     phone,
     id: nanoid(),
   };
-
-  if (contactToAdd !== undefined) {
-    contacts.push(contactToAdd);
-    fs.writeFile(contactsPath, JSON.stringify(contacts));
-    return contactToAdd;
-  } else {
-    return null;
-  }
 }
 
 export async function rewriteContact(id, contact) {
@@ -65,7 +57,7 @@ export async function rewriteContact(id, contact) {
 
   contacts[index] = updatedContact;
 
-  await writeContact(contacts);
+  await rewriteContact(contacts);
 
   return updatedContact;
 }
