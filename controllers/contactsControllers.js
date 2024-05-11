@@ -38,7 +38,7 @@ export const deleteContact = async (req, res, next) => {
 
 export const createContact = async (req, res, next) => {
   try {
-    const addedContact = await Contact(
+    const addedContact = await Contact.create(
       req.body.name,
       req.body.email,
       req.body.phone
@@ -53,7 +53,7 @@ export const updateContact = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const updatedContact = await Contact(id, {
+    const updatedContact = await Contact.findByIdAndUpdate(id, {
       name: req.body.name,
       email: req.body.email,
       phone: req.body.phone,
@@ -73,7 +73,7 @@ export const updateStatusContact = async (req, res, next) => {
   try {
     const { contactId } = req.params;
 
-    const updatedContact = await Contact(contactId, {
+    const updatedContact = await Contact.findByIdAndUpdate(contactId, {
       favorite: req.body.favorite,
     });
 
