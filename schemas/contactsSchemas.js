@@ -20,3 +20,7 @@ export const updateContactSchema = Joi.object({
 
   phone: Joi.string().min(10).max(20),
 }).min(1);
+
+export const updateStatusContactSchema = Joi.object({
+  favorite: Joi.boolean(),
+});
