@@ -1,9 +1,9 @@
 import HttpError from "../helpers/HttpError.js";
 import Contact from "../models/contact.js";
 
-export const getAllContacts = async (_, res, next) => {
+export const getAllContacts = async (req, res, next) => {
   try {
-    const allContacts = await Contact.find();
+    const allContacts = await Contact.find({ owner: req.user.id });
     res.status(200).send(allContacts);
   } catch (error) {
     next(error);
@@ -13,11 +13,15 @@ export const getAllContacts = async (_, res, next) => {
 export const getOneContact = async (req, res, next) => {
   try {
     const { contactId } = req.params;
-    const contactToFind = await Contact.findById(contactId);
 
-    if (!contactToFind) throw HttpError(404);
+    const oneContact = await Contact.findOne({
+      _id: contactId,
+      owner: req.user.id,
+    });
 
-    res.status(200).send(contactToFind);
+    if (!oneContact) throw HttpError(404);
+
+    res.status(200).send(oneContact);
   } catch (error) {
     next(error);
   }
@@ -26,11 +30,15 @@ export const getOneContact = async (req, res, next) => {
 export const deleteContact = async (req, res, next) => {
   try {
     const { contactId } = req.params;
-    const contactToDelete = await Contact.findByIdAndDelete(contactId);
 
-    if (!contactToDelete) throw HttpError(404);
+    const deletedContact = await Contact.findOneAndDelete({
+      _id: contactId,
+      owner: req.user.id,
+    });
 
-    res.status(200).send(contactToDelete);
+    if (!deletedContact) throw HttpError(404);
+
+    res.status(200).send(deletedContact);
   } catch (error) {
     next(error);
   }
@@ -38,12 +46,12 @@ export const deleteContact = async (req, res, next) => {
 
 export const createContact = async (req, res, next) => {
   try {
-    const addedContact = await Contact.create(
-      req.body.name,
-      req.body.email,
-      req.body.phone
-    );
-    res.json(addedContact).status(201);
+    const addContact = await Contact.create({
+      ...req.body,
+      owner: req.user.id,
+    });
+
+    res.status(201).send(addContact);
   } catch (error) {
     next(error);
   }
@@ -51,39 +59,19 @@ export const createContact = async (req, res, next) => {
 
 export const updateContact = async (req, res, next) => {
   try {
-    const { id } = req.params;
-
-    const updatedContact = await Contact.findByIdAndUpdate(id, {
-      name: req.body.name,
-      email: req.body.email,
-      phone: req.body.phone,
-    });
-
-    if (!updatedContact) {
-      throw HttpError(404);
-    }
-
-    res.json(updatedContact).status(200);
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const updateStatusContact = async (req, res, next) => {
-  try {
     const { contactId } = req.params;
 
-    const updatedContact = await Contact.findByIdAndUpdate(
-      contactId,
-      { favorite: req.body.favorite },
-      { new: true }
+    const updatedContact = await Contact.findOneAndUpdate(
+      { _id: contactId, owner: req.user.id },
+      req.body,
+      {
+        new: true,
+      }
     );
 
-    if (!updatedContact) {
-      throw HttpError(404);
-    }
+    if (!updatedContact) throw HttpError(404);
 
-    res.json(updatedContact).status(200);
+    res.status(200).send(updatedContact);
   } catch (error) {
     next(error);
   }
