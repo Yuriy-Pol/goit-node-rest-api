@@ -1,13 +1,16 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import HttpError from "../helpers/HttpError.js";
+import gravatar from "gravatar";
+import * as fs from "node:fs/promises";
+import path from "node:path";
+import Jimp from "jimp";
 
 import User from "../models/user.js";
 
 export const createUser = async (req, res, next) => {
-  const { email, password } = req.body;
-
   try {
+    const { email, password } = req.body;
     const user = await User.findOne({ email });
 
     if (user !== null) {
@@ -16,9 +19,18 @@ export const createUser = async (req, res, next) => {
 
     const passwordHash = await bcrypt.hash(password, 10);
 
-    const addUser = await User.create({ email, password: passwordHash });
+    const avatarUrl = gravatar.profile_url(email, {
+      protocol: "http",
+      format: "png",
+    });
 
-    res.status(201).send({
+    const addUser = await User.create({
+      email,
+      password: passwordHash,
+      avatarURL: avatarUrl,
+    });
+
+    res.status(201).json({
       user: {
         email: addUser.email,
         subscription: addUser.subscription,
@@ -30,9 +42,8 @@ export const createUser = async (req, res, next) => {
 };
 
 export const loginUser = async (req, res, next) => {
-  const { email, password } = req.body;
-
   try {
+    const { email, password } = req.body;
     const user = await User.findOne({ email });
 
     if (!user) {
@@ -50,12 +61,12 @@ export const loginUser = async (req, res, next) => {
       process.env.JWT_SECRET
     );
     const addUserToken = await User.findByIdAndUpdate(
-      user.id,
+      user._id,
       { token },
       { new: true }
     );
 
-    res.status(200).send({
+    res.status(200).json({
       token: addUserToken.token,
       user: {
         email: addUserToken.email,
@@ -69,7 +80,7 @@ export const loginUser = async (req, res, next) => {
 
 export const logoutUser = async (req, res, next) => {
   try {
-    await User.findByIdAndUpdate(req.user.id, { token: null });
+    await User.findByIdAndUpdate(req.user._id, { token: null });
     res.status(204).end();
   } catch (error) {
     next(error);
@@ -78,10 +89,9 @@ export const logoutUser = async (req, res, next) => {
 
 export const currentUser = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id);
-    res.status(200).send({
-      email: user.email,
-      subscription: user.subscription,
+    res.status(200).json({
+      email: req.user.email,
+      subscription: req.user.subscription,
     });
   } catch (error) {
     next(error);
@@ -90,14 +100,44 @@ export const currentUser = async (req, res, next) => {
 
 export const subscriptionUpdate = async (req, res, next) => {
   try {
-    const updatedUser = await User.findByIdAndUpdate(req.user.id, req.body, {
+    const updatedUser = await User.findByIdAndUpdate(req.user._id, req.body, {
       new: true,
     });
 
-    res.status(200).send({
+    res.status(200).json({
       email: updatedUser.email,
       subscription: updatedUser.subscription,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateAvatar = async (req, res, next) => {
+  try {
+    const extname = path.extname(req.file.path);
+    const basename = path.basename(req.file.path, extname);
+    const newAvatarName = `${basename}-250x250${extname}`;
+    const avatarResize = await Jimp.read(req.file.path);
+
+    await avatarResize.resize(256, 256).writeAsync(req.file.path);
+
+    await fs.rename(
+      req.file.path,
+      path.resolve("public", "avatars", newAvatarName)
+    );
+
+    const avatarURL = `/avatars/${newAvatarName}`;
+
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { avatarURL: avatarURL },
+      {
+        new: true,
+      }
+    );
+
+    res.status(200).json({ avatarURL: user.avatarURL });
   } catch (error) {
     next(error);
   }

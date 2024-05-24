@@ -11,6 +11,8 @@ dist-ssr
 /.pnp
 .pnp.js
 /coverage
+/public/avatars/*
+!/public/avatars/.gitkeep
 /build
 .vscode/*
 !.vscode/extensions.json

@@ -10,7 +10,7 @@ export const createUserSchema = Joi.object({
     )
     .required(),
 }).error((errors) => {
-  return new Error("Error");
+  return new Error("Помилка від Joi або іншої бібліотеки валідації");
 });
 
 export const updateUserSchema = Joi.object({
@@ -23,7 +23,7 @@ export const updateUserSchema = Joi.object({
 })
   .min(1)
   .error((errors) => {
-    return new Error("Error");
+    return new Error("Помилка від Joi або іншої бібліотеки валідації");
   });
 
 export const loginUserSchema = Joi.object({
@@ -36,11 +36,11 @@ export const loginUserSchema = Joi.object({
     )
     .required(),
 }).error((errors) => {
-  return new Error("Error");
+  return new Error("Помилка від Joi або іншої бібліотеки валідації");
 });
 
 export const updateUserSubscriptionSchema = Joi.object({
   subscription: Joi.string().valid("starter", "pro", "business"),
 }).error((errors) => {
-  return new Error("Error");
+  return new Error("Помилка від Joi або іншої бібліотеки валідації");
 });
