@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
+    avatarURL: { type: String },
     password: {
       type: String,
       required: [true, "Password is required"],

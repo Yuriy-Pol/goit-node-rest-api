@@ -13,22 +13,17 @@ const auth = async (req, res, next) => {
 
     if (bearer !== "Bearer") throw HttpError(401);
 
-    await jwt.verify(token, process.env.JWT_SECRET, async (err, decode) => {
-      if (err) throw HttpError(401);
+    const decode = await jwt.verify(token, process.env.JWT_SECRET);
 
-      const user = await User.findById(decode.id);
+    const user = await User.findById(decode.id);
 
-      if (user === null) throw HttpError(401);
+    if (user === null) throw HttpError(401);
 
-      if (user.token !== token) throw HttpError(401);
+    if (user.token !== token) throw HttpError(401);
 
-      req.user = {
-        id: user._id,
-        email: user.email,
-      };
+    req.user = user;
 
-      next();
-    });
+    next();
   } catch (error) {
     next(error);
   }
